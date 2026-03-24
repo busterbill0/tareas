@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAREAS — Billblood</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --border: #2a2a2a;
+    --urgent: #ff3c3c;
+    --normal: #c8ff57;
+    --done: #3a3a3a;
+    --text: #f0f0f0;
+    --muted: #555;
+    --personal: #ffaa33;
+    --trabajo: #57c8ff;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    padding: 2rem 1.5rem 4rem;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 1.8rem;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 1rem;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .counter { font-size: 0.7rem; color: var(--muted); text-align: right; line-height: 1.6; }
+  .counter span { color: var(--normal); }
+
+  .tabs { display: flex; margin-bottom: 2rem; border: 1px solid var(--border); }
+
+  .tab-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-btn:first-child { border-right: 1px solid var(--border); }
+
+  .tab-btn.active-personal { color: var(--personal); background: rgba(87,200,255,0.06); }
+  .tab-btn.active-trabajo  { color: var(--trabajo);  background: rgba(255,170,51,0.06); }
+
+  .tab-badge { font-family: var(--font-mono); font-size: 0.6rem; margin-left: 0.5rem; opacity: 0.7; }
+
+  .add-area { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 2.5rem; }
+  .input-row { display: flex; gap: 0.5rem; }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]::placeholder { color: var(--muted); }
+  body.tab-personal input[type="text"]:focus { border-color: var(--personal); }
+  body.tab-trabajo  input[type="text"]:focus { border-color: var(--trabajo); }
+
+  .priority-toggle { display: flex; gap: 0.4rem; }
+
+  .prio-btn {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .prio-btn.active-urgent { border-color: var(--urgent); color: var(--urgent); background: rgba(255,60,60,0.08); }
+  .prio-btn.active-normal { border-color: var(--normal); color: var(--normal); background: rgba(200,255,87,0.08); }
+
+  .add-btn {
+    padding: 0.75rem 1.4rem;
+    border: none;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    color: #0e0e0e;
+  }
+
+  body.tab-personal .add-btn { background: var(--personal); }
+  body.tab-trabajo  .add-btn { background: var(--trabajo); }
+  .add-btn:hover { opacity: 0.85; }
+
+  .filters { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+
+  .filter-btn {
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.active { border-color: var(--text); color: var(--text); }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+    margin-top: 1.8rem;
+  }
+
+  .task-list { display: flex; flex-direction: column; gap: 0.4rem; }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-item.urgent { border-left-color: var(--urgent); }
+  .task-item.normal { border-left-color: var(--normal); }
+  .task-item.done   { border-left-color: var(--done); opacity: 0.4; }
+
+  .task-check {
+    width: 18px; height: 18px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.15s;
+  }
+
+  .task-item.done .task-check { background: var(--done); border-color: var(--done); }
+  .task-item.done .task-check::after {
+    content: '✓';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; color: #888;
+  }
+
+  .task-text { flex: 1; font-size: 0.85rem; line-height: 1.4; color: var(--text); }
+  .task-item.done .task-text { text-decoration: line-through; color: var(--muted); }
+
+  .task-prio-tag {
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.4rem;
+    border: 1px solid;
+    flex-shrink: 0;
+  }
+
+  .task-item.urgent .task-prio-tag { color: var(--urgent); border-color: var(--urgent); }
+  .task-item.normal .task-prio-tag { color: var(--normal); border-color: var(--normal); }
+  .task-item.done   .task-prio-tag { color: var(--done);   border-color: var(--done); }
+
+  .task-delete {
+    background: none; border: none;
+    color: var(--muted); font-size: 1rem;
+    cursor: pointer; padding: 0 0.2rem;
+    transition: color 0.15s; flex-shrink: 0;
+  }
+  .task-delete:hover { color: var(--urgent); }
+
+  .empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    border: 1px dashed var(--border);
+  }
+  .empty-icon { font-size: 2rem; margin-bottom: 0.8rem; opacity: 0.4; }
+
+  .clear-done {
+    margin-top: 1.5rem;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+  }
+  .clear-done:hover { border-color: var(--urgent); color: var(--urgent); }
+</style>
+</head>
+<body class="tab-personal">
+
+<header>
+  <h1>TAREAS</h1>
+  <div class="counter" id="counter"></div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active-personal" id="tab-personal" onclick="setTab('personal')">
+    PERSONAL <span class="tab-badge" id="badge-personal"></span>
+  </button>
+  <button class="tab-btn" id="tab-trabajo" onclick="setTab('trabajo')">
+    TRABAJO <span class="tab-badge" id="badge-trabajo"></span>
+  </button>
+</div>
+
+<div class="add-area">
+  <div class="input-row">
+    <input type="text" id="taskInput" placeholder="Añade una tarea personal..." autocomplete="off" />
+    <button class="add-btn" onclick="addTask()">+ AÑADIR</button>
+  </div>
+  <div class="priority-toggle">
+    <button class="prio-btn active-urgent" id="btn-urgent" onclick="setPrio('urgent')">🔴 URGENTE</button>
+    <button class="prio-btn" id="btn-normal" onclick="setPrio('normal')">🟢 NORMAL</button>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="setFilter('all', this)">TODAS</button>
+  <button class="filter-btn" onclick="setFilter('urgent', this)">URGENTES</button>
+  <button class="filter-btn" onclick="setFilter('normal', this)">NORMALES</button>
+  <button class="filter-btn" onclick="setFilter('done', this)">HECHAS</button>
+</div>
+
+<div id="taskContainer"></div>
+<button class="clear-done" onclick="clearDone()">— LIMPIAR TAREAS COMPLETADAS —</button>
+
+<script>
+  let tasks = JSON.parse(localStorage.getItem('bb-tasks-v2') || '[]');
+  let selectedPrio = 'urgent';
+  let currentFilter = 'all';
+  let currentTab = 'personal';
+
+  function save() { localStorage.setItem('bb-tasks-v2', JSON.stringify(tasks)); }
+
+  function setTab(tab) {
+    currentTab = tab;
+    currentFilter = 'all';
+    document.body.className = 'tab-' + tab;
+    document.getElementById('tab-personal').className = 'tab-btn' + (tab === 'personal' ? ' active-personal' : '');
+    document.getElementById('tab-trabajo').className  = 'tab-btn' + (tab === 'trabajo'  ? ' active-trabajo'  : '');
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.filter-btn')[0].classList.add('active');
+    document.getElementById('taskInput').placeholder =
+      tab === 'personal' ? 'Añade una tarea personal...' : 'Añade una tarea de trabajo...';
+    render();
+  }
+
+  function setPrio(p) {
+    selectedPrio = p;
+    document.getElementById('btn-urgent').className = 'prio-btn' + (p === 'urgent' ? ' active-urgent' : '');
+    document.getElementById('btn-normal').className  = 'prio-btn' + (p === 'normal'  ? ' active-normal'  : '');
+  }
+
+  function setFilter(f, el) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    render();
+  }
+
+  function addTask() {
+    const input = document.getElementById('taskInput');
+    const text = input.value.trim();
+    if (!text) return;
+    tasks.unshift({ id: Date.now(), text, prio: selectedPrio, tab: currentTab, done: false });
+    save(); input.value = ''; render();
+  }
+
+  function toggleDone(id) {
+    const t = tasks.find(t => t.id === id);
+    if (t) { t.done = !t.done; save(); render(); }
+  }
+
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    save(); render();
+  }
+
+  function clearDone() {
+    tasks = tasks.filter(t => !(t.done && t.tab === currentTab));
+    save(); render();
+  }
+
+  function render() {
+    const container = document.getElementById('taskContainer');
+    const tabTasks = tasks.filter(t => t.tab === currentTab);
+
+    let filtered = tabTasks;
+    if (currentFilter === 'urgent') filtered = tabTasks.filter(t => t.prio === 'urgent' && !t.done);
+    if (currentFilter === 'normal') filtered = tabTasks.filter(t => t.prio === 'normal' && !t.done);
+    if (currentFilter === 'done')   filtered = tabTasks.filter(t => t.done);
+
+    const pCount = tasks.filter(t => t.tab === 'personal' && !t.done).length;
+    const tCount = tasks.filter(t => t.tab === 'trabajo'  && !t.done).length;
+    document.getElementById('badge-personal').textContent = pCount ? `(${pCount})` : '';
+    document.getElementById('badge-trabajo').textContent  = tCount ? `(${tCount})` : '';
+
+    const urgent = tabTasks.filter(t => !t.done && t.prio === 'urgent').length;
+    const normal = tabTasks.filter(t => !t.done && t.prio === 'normal').length;
+    const done   = tabTasks.filter(t => t.done).length;
+    document.getElementById('counter').innerHTML =
+      `<span>${urgent}</span> urgentes · <span>${normal}</span> normales<br>${done} completadas`;
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="empty"><div class="empty-icon">◻</div>Sin tareas aquí. Añade algo o cambia el filtro.</div>`;
+      return;
+    }
+
+    if (currentFilter === 'all') {
+      const pending  = filtered.filter(t => !t.done);
+      const doneList = filtered.filter(t => t.done);
+      let html = '';
+      if (pending.length)  html += `<div class="section-label">Pendientes — ${pending.length}</div><div class="task-list">${pending.map(taskHTML).join('')}</div>`;
+      if (doneList.length) html += `<div class="section-label">Completadas — ${doneList.length}</div><div class="task-list">${doneList.map(taskHTML).join('')}</div>`;
+      container.innerHTML = html;
+    } else {
+      container.innerHTML = `<div class="task-list">${filtered.map(taskHTML).join('')}</div>`;
+    }
+  }
+
+  function taskHTML(t) {
+    const cls = t.done ? 'done' : t.prio;
+    const tag = t.done ? 'hecha' : t.prio === 'urgent' ? 'urgente' : 'normal';
+    return `<div class="task-item ${cls}">
+      <div class="task-check" onclick="toggleDone(${t.id})"></div>
+      <span class="task-text">${escapeHTML(t.text)}</span>
+      <span class="task-prio-tag">${tag}</span>
+      <button class="task-delete" onclick="deleteTask(${t.id})">✕</button>
+    </div>`;
+  }
+
+  function escapeHTML(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  document.getElementById('taskInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTask();
+  });
+
+  render();
+</script>
+</body>
+</html>
